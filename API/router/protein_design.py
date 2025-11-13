@@ -24,22 +24,19 @@ async def design_protein(
 ):
     """
     Handles a protein design request and returns a ZIP of the results.
+    Delegates all processing logic to the service layer.
     """
     job_path = None
     try:
-        # --- Validate file ---
+        # --- Basic file validation ---
         if not pdb_file.filename.lower().endswith(".pdb"):
             raise HTTPException(status_code=400, detail="Only PDB files are allowed")
 
         content = await pdb_file.read()
         if len(content) > settings.MAX_FILE_SIZE:
-            raise HTTPException(status_code=413, detail="File too large")
+            raise HTTPException(status_code=413, detail=f"File too large (max {settings.max_file_size_mb:.1f} MB)")
 
-        content_str = content.decode("utf-8", errors="ignore")
-        if not content_str.strip().startswith(("HEADER", "ATOM", "MODEL")):
-            raise HTTPException(status_code=400, detail="Invalid PDB file format")
-
-        # --- Workspace ---
+        # --- Create workspace and save file ---
         job_path = WorkspaceManager.create_workspace()
         job_id = Path(job_path).name
         input_file = Path(job_path) / pdb_file.filename
@@ -47,7 +44,9 @@ async def design_protein(
         with open(input_file, "wb") as f:
             f.write(content)
 
-        # --- Job info ---
+        logger.info(f"Created job {job_id} with file: {pdb_file.filename}")
+
+        # --- Create job info and delegate to service ---
         job_info = JobInfo(
             job_id=job_id,
             job_path=str(job_path),
@@ -59,25 +58,31 @@ async def design_protein(
             }
         )
 
-        # --- Process ---
+        # --- Delegate all processing to service (including PDB cleaning) ---
         result = ProteinDesignService.process_request(job_info)
+        
         if not result.success:
-            raise HTTPException(status_code=500, detail=f"PDB Engine failed: {result.stderr}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Protein design failed: {result.stderr or 'Unknown error'}"
+            )
 
-        # --- Create ZIP ---
-        zip_name = f"protein_design_results_{job_id}.zip"
+        # --- Create results archive ---
+        zip_name = f"protein_design_results_{job_id}"  # ArchiveManager adds .zip extension
         zip_path = ArchiveManager.create_results_zip(str(job_path), zip_name)
 
         if not Path(zip_path).exists():
             raise HTTPException(status_code=500, detail="Failed to create results archive")
 
-        # --- Cleanup tasks ---
+        logger.info(f"Job {job_id} completed successfully. Results: {zip_path}")
+
+        # --- Schedule cleanup ---
         background_tasks.add_task(WorkspaceManager.cleanup_path, str(zip_path))
         background_tasks.add_task(WorkspaceManager.cleanup_path, str(job_path))
 
         return FileResponse(
             path=zip_path,
-            filename=zip_name,
+            filename=Path(zip_path).name,
             media_type="application/zip"
         )
 
