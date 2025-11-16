@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=False, description="Enable debug mode")
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
 
+    # ====== PDB Preprocessing Configuration ======
+    PREPROCESSING_ENABLED: bool = Field(default=True, description="Enable PDB preprocessing/cleaning")
+    PREPROCESSING_KEEP_ALL_CHAINS_BY_DEFAULT: bool = Field(default=True, description="Keep all protein chains by default (recommended for protein-protein interfaces)")
+    PREPROCESSING_LOG_LEVEL: str = Field(default="INFO", description="Logging level for preprocessing operations")
+    PREPROCESSING_REMOVE_WATER: bool = Field(default=True, description="Remove water molecules during cleaning")
+    PREPROCESSING_REMOVE_IONS: bool = Field(default=True, description="Remove ions during cleaning")
+    PREPROCESSING_REMOVE_LIGANDS: bool = Field(default=True, description="Remove ligands during cleaning")
+    PREPROCESSING_REMOVE_HYDROGENS: bool = Field(default=True, description="Remove hydrogen atoms during cleaning")
+
     # ====== Model Config ======
     model_config = SettingsConfigDict(
         env_file="../../.env",
