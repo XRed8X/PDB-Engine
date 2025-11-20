@@ -1,11 +1,33 @@
 ---
 import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
+import MainForm from '../components/forms/MainForm.tsx';
+import Navbar from '../layouts/Navbar.tsx';
+import '../styles/global.css';
 // Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
 // Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDB-Engine UI</title>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen">
+    <Navbar client:load />
+    <main class="p-4 md:p-8">
+      <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl md:text-4xl font-bold text-center mb-3 text-blue-900">PDB-Engine</h1>
+        <p class="text-center mb-8 text-gray-700 text-sm md:text-base">
+          Build and preview your protein analysis commands. Select a command, configure arguments, and enable flags to generate the command line.
+        </p>
+        
+        <div class="space-y-10 mt-6 mb-20">
+          <MainForm client:load />
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

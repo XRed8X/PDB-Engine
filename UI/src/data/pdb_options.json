@@ -1,0 +1,144 @@
+{
+  "compatibility": {
+    "ComputeBinding": {
+      "arguments": ["pdb", "prefix", "wbind"],
+      "flags": ["physics", "monomer"]
+    },
+    "ComputeEvolutionScore": {
+      "arguments": ["pdb", "seq", "resfile"],
+      "flags": ["evolution", "evo_all_terms", "seed_from_nat_seq"]
+    },
+    "ComputeResEnergy": {
+      "arguments": ["pdb", "resi", "resi_pair", "excl_resi"],
+      "flags": ["physics", "monomer"]
+    },
+    "ComputeRotEnergy": {
+      "arguments": ["pdb", "rotlib", "resi"],
+      "flags": ["physics"]
+    },
+    "ComputeStability": {
+      "arguments": ["pdb", "prefix"],
+      "flags": ["monomer"]
+    },
+    "ComputeResPairEnergy": {
+      "arguments": ["pdb", "resi_pair"],
+      "flags": []
+    },
+    "ProteinDesign": {
+      "arguments": ["pdb", "design_chains", "rotlib", "resfile", "prefix", "ntraj"],
+      "flags": ["ppint", "interface_only", "evolution", "physics", "monomer", "seed_from_nat_seq", "evo_all_terms", "excl_cys_rots"]
+    },
+    "AddPolarHydrogen": {
+      "arguments": ["pdb", "prefix"],
+      "flags": ["no_hydrogen"]
+    },
+    "BuildMutant": {
+      "arguments": ["pdb", "mutant_file", "prefix"],
+      "flags": ["wildtype_only", "debug"]
+    },
+    "CalcPhiPsi": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "CalcResMinRMSD": {
+      "arguments": ["pdb", "resi"],
+      "flags": []
+    },
+    "CheckClash0": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "CheckClash1": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "CheckClash2": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "CheckResInRotLib": {
+      "arguments": ["pdb", "rotlib"],
+      "flags": []
+    },
+    "CompareProtSideChain": {
+      "arguments": ["pdb", "pdb2"],
+      "flags": []
+    },
+    "FindCoreRes": {
+      "arguments": ["pdb", "ncut_cb_core"],
+      "flags": []
+    },
+    "FindIntermediateRes": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "FindInterfaceRes": {
+      "arguments": ["pdb", "ppi_shell1", "ppi_shell2"],
+      "flags": ["interface_only"]
+    },
+    "FindSurfaceRes": {
+      "arguments": ["pdb", "ncut_cb_surf"],
+      "flags": []
+    },
+    "Minimize": {
+      "arguments": ["pdb", "rotlib", "prefix"],
+      "flags": ["physics", "monomer", "dry_run"]
+    },
+    "OptimizeHydrogen": {
+      "arguments": ["pdb", "prefix"],
+      "flags": ["no_hydrogen"]
+    },
+    "RepairStructure": {
+      "arguments": ["pdb", "prefix"],
+      "flags": ["keep_water"]
+    },
+    "ShowResComposition": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "PredPhiPsi": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "PredSS": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "PredSA": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "CalcResBfactor": {
+      "arguments": ["pdb"],
+      "flags": []
+    },
+    "OptimizeWeight": {
+      "arguments": ["pdb", "wprof"],
+      "flags": []
+    },
+    "MakeLigParamAndTopo": {
+      "arguments": ["lig_param", "lig_topo", "init_3atoms"],
+      "flags": ["enzyme"]
+    },
+    "MakeLigPoses": {
+      "arguments": ["pdb", "lig_placing", "rotlib"],
+      "flags": ["protlig"]
+    },
+    "AnalyzeLigPoses": {
+      "arguments": ["pdb", "read_lig_poses"],
+      "flags": []
+    },
+    "ScreenLigPoses": {
+      "arguments": ["pdb", "scrn_by_orien", "scrn_by_vdw_pctl", "scrn_by_rmsd"],
+      "flags": []
+    },
+    "WriteFirstLigConfAsMol2": {
+      "arguments": ["mol2"],
+      "flags": []
+    },
+    "SelectResWithin": {
+      "arguments": ["pdb", "within_residues", "within_range"],
+      "flags": []
+    }
+  }
+}
