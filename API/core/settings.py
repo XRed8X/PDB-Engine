@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     # ====== Server Configuration ======
     HOST: str = Field(default="0.0.0.0", description="Server host")
     PORT: int = Field(default=8000, description="Server port")
+    
+    # ====== CORS Configuration ======
+    CORS_ORIGINS: List[str] = Field(
+        default=["http://localhost:4321", "http://localhost:3000", "http://127.0.0.1:4321", "http://127.0.0.1:3000"],
+        description="Allowed CORS origins for the UI"
+    )
 
     # ====== PDB Engine Configuration ======
     PDBENGINE_BINARY_PATH: Path = Field(..., description="Path to the PDB Engine binary")
@@ -79,6 +85,12 @@ class Settings(BaseSettings):
     def parse_extensions(cls, v):
         if isinstance(v, str):
             return [ext.strip() for ext in v.split(",") if ext.strip()]
+        return v
+    
+    @field_validator("CORS_ORIGINS", mode="before")
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
     # ====== Helper Properties ======
