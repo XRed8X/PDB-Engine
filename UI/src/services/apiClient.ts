@@ -7,7 +7,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 600000, // 10 minutes timeout for long-running PDB Engine commands
 });
 
 // Request interceptor

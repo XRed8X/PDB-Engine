@@ -15,11 +15,14 @@ export default function MainForm() {
     updateFormField,
     handleSubmit,
     command,
+    commandJSON,
     commandOptions,
     currentConfig,
     isLoading,
     error,
-    jobId,
+    success,
+    downloadUrl,
+    downloads,
   } = useCommandForm();
 
   return (
@@ -86,16 +89,25 @@ export default function MainForm() {
           <CommandPreview command={command} />
 
           {error && (
-            <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg">
-              <p className="text-red-800 font-semibold">Error:</p>
-              <p className="text-red-700">{error}</p>
+            <div className="p-4 mb-4 text-red-700 bg-red-100 border border-red-400 rounded">
+              <p className="font-semibold">Error:</p>
+              <p>{error}</p>
             </div>
           )}
 
-          {jobId && (
-            <div className="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
-              <p className="text-green-800 font-semibold">Success!</p>
-              <p className="text-green-700">Job ID: {jobId}</p>
+          {success && (
+            <div className="p-4 mb-4 text-green-700 bg-green-100 border border-green-400 rounded">
+              <p className="font-semibold">Success!</p>
+              <p>Results downloaded successfully.</p>
+              {downloadUrl && (
+                <a 
+                  href={downloadUrl} 
+                  download 
+                  className="text-green-600 underline hover:text-green-800"
+                >
+                  Click here if download didn't start
+                </a>
+              )}
             </div>
           )}
 
