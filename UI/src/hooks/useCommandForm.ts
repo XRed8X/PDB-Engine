@@ -4,12 +4,22 @@ import { initializeFormData, generateCommand, generateCommandJSON } from '../uti
 import { pdbEngineService } from '../services/pdbEngineService';
 import type { FormDataState, CommandConfig, PDBOptions } from '../types';
 
+interface DownloadItem {
+  id: string;
+  command: string;
+  timestamp: string;
+  downloadUrl: string;
+  filename: string;
+}
+
 export const useCommandForm = () => {
   const [selectedCommand, setSelectedCommand] = useState('ProteinDesign');
   const [formData, setFormData] = useState<FormDataState>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [downloads, setDownloads] = useState<DownloadItem[]>([]);
 
   const commandOptions = Object.keys((pdbOptions as PDBOptions).compatibility);
   const currentConfig = selectedCommand
@@ -24,15 +34,26 @@ export const useCommandForm = () => {
     }
   }, [selectedCommand, currentConfig]);
 
+  // Cleanup download URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) {
+        URL.revokeObjectURL(downloadUrl);
+      }
+    };
+  }, [downloadUrl]);
+
   const updateFormField = (key: string, value: string | File | null | boolean) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
     setError(null);
+    setSuccess(false);
   };
 
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
       setError(null);
+      setSuccess(false);
       
       const commandJSON = generateCommandJSON(selectedCommand, currentConfig, formData);
       
@@ -40,12 +61,37 @@ export const useCommandForm = () => {
       console.log('Form data:', formData);
       console.log('Command JSON:', commandJSON);
       
-      const response = await pdbEngineService.executeCommand(selectedCommand, formData);
+      // Execute command and get blob
+      const blob = await pdbEngineService.executeCommand(selectedCommand, formData);
       
-      setJobId(response.job_id);
-      console.log('Job created:', response);
+      // Create download URL from blob
+      const url = URL.createObjectURL(blob);
+      setDownloadUrl(url);
       
-      // TODO: Redirect to job status page or show success message
+      // Trigger automatic download
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `${selectedCommand.toLowerCase()}_results_${timestamp}.zip`;
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Add to downloads history
+      const newDownload: DownloadItem = {
+        id: Date.now().toString(),
+        command: selectedCommand,
+        timestamp: new Date().toISOString(),
+        downloadUrl: url,
+        filename: filename,
+      };
+      setDownloads((prev) => [newDownload, ...prev]);
+      
+      setSuccess(true);
+      console.log('Command executed successfully, file downloaded:', filename);
+      
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Error executing command';
       setError(errorMessage);
@@ -70,6 +116,8 @@ export const useCommandForm = () => {
     currentConfig,
     isLoading,
     error,
-    jobId,
+    success,
+    downloadUrl,
+    downloads,
   };
 };
