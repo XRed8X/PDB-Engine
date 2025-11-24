@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     # ====== Server Configuration ======
     HOST: str = Field(default="0.0.0.0", description="Server host")
     PORT: int = Field(default=8000, description="Server port")
+    
+    # ====== CORS Configuration ======
+    CORS_ORIGINS: List[str] = Field(
+        default=["http://localhost:4321", "http://localhost:3000", "http://127.0.0.1:4321", "http://127.0.0.1:3000"],
+        description="Allowed CORS origins for the UI"
+    )
 
     # ====== PDB Engine Configuration ======
     PDBENGINE_BINARY_PATH: Path = Field(..., description="Path to the PDB Engine binary")
@@ -41,6 +47,15 @@ class Settings(BaseSettings):
     # ====== Debug & Logging ======
     DEBUG: bool = Field(default=False, description="Enable debug mode")
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
+
+    # ====== PDB Preprocessing Configuration ======
+    PREPROCESSING_ENABLED: bool = Field(default=True, description="Enable PDB preprocessing/cleaning")
+    PREPROCESSING_KEEP_ALL_CHAINS_BY_DEFAULT: bool = Field(default=True, description="Keep all protein chains by default (recommended for protein-protein interfaces)")
+    PREPROCESSING_LOG_LEVEL: str = Field(default="INFO", description="Logging level for preprocessing operations")
+    PREPROCESSING_REMOVE_WATER: bool = Field(default=True, description="Remove water molecules during cleaning")
+    PREPROCESSING_REMOVE_IONS: bool = Field(default=True, description="Remove ions during cleaning")
+    PREPROCESSING_REMOVE_LIGANDS: bool = Field(default=True, description="Remove ligands during cleaning")
+    PREPROCESSING_REMOVE_HYDROGENS: bool = Field(default=True, description="Remove hydrogen atoms during cleaning")
 
     # ====== Model Config ======
     model_config = SettingsConfigDict(
@@ -70,6 +85,12 @@ class Settings(BaseSettings):
     def parse_extensions(cls, v):
         if isinstance(v, str):
             return [ext.strip() for ext in v.split(",") if ext.strip()]
+        return v
+    
+    @field_validator("CORS_ORIGINS", mode="before")
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
     # ====== Helper Properties ======

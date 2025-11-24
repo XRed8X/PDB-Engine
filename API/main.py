@@ -2,6 +2,8 @@
 Main FastAPI application for PDB Engine API.
 """
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from router import execute_command
 from core.settings import settings
 from router.protein_design import router as protein_router
 
@@ -11,7 +13,17 @@ app = FastAPI(
     version=settings.API_VERSION
 )
 
-app.include_router(protein_router)
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# app.include_router(protein_router)
+app.include_router(execute_command.router, prefix="/api")
 
 @app.get("/")
 async def root():

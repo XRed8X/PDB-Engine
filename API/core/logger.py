@@ -1,11 +1,15 @@
 import logging
 from core.settings import settings
 
+def _resolve_log_level(level) -> int:
+    if isinstance(level, str):
+        return getattr(logging, level.upper(), logging.INFO)
+    elif isinstance(level, int):
+        return level
+    return logging.INFO
+
 def get_logger(name: str = "PDB Engine Backend") -> logging.Logger:
-    """ Configure and return a logger instance """
-    # Create logger
     logger = logging.getLogger(name)
-    # Avoid adding multiple handlers if logger is already configured
     if not logger.handlers:
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
@@ -13,7 +17,10 @@ def get_logger(name: str = "PDB Engine Backend") -> logging.Logger:
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-    logger.setLevel(getattr(logging, settings.LOG_LEVEL.upper(), getattr(logging, logging.INFO)))
+
+    logger.setLevel(_resolve_log_level(settings.LOG_LEVEL))
     return logger
 
 logger = get_logger()
+preprocessing_logger = logging.getLogger("Preprocessing")
+preprocessing_logger.setLevel(_resolve_log_level(settings.PREPROCESSING_LOG_LEVEL))
