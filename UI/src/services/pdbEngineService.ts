@@ -4,7 +4,7 @@ export const pdbEngineService = {
   /**
    * Execute a PDB Engine command and download results
    */
-  async executeCommand(command: string, commandData: any): Promise<Blob> {
+  async executeCommand(command: string, commandData: any): Promise<{ blob: Blob; executionTime: string; status: string }> {
     const formData = new FormData();
     formData.append('command', command);
 
@@ -32,6 +32,10 @@ export const pdbEngineService = {
       responseType: 'blob', // Receive file as blob
     });
     
-    return response.data;
+    return {
+      blob: response.data,
+      executionTime: response.headers['x-execution-time'] || '0',
+      status: response.headers['x-job-status'] || 'finished',
+    };
   },
 };

@@ -4,7 +4,7 @@ Generic command service - executes any PDB Engine command dynamically.
 import logging
 from pathlib import Path
 
-from models.models import PDBEngineExecutionResult, JobInfo
+from models.models2 import PDBEngineExecutionResult, JobInfo
 from services.engine_executor import PDBEngineExecutor
 from services.pdb_cleaner_service import PDBCleanerService
 from core.commands2 import build_command_from_dict

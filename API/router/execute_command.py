@@ -109,10 +109,16 @@ async def execute_command(
         
         if not result.success:
             logger.error(f"Command failed: {result.stderr}")
+            job_info.status = "error"
+            job_info.execution_time = result.execution_time
             raise HTTPException(
                 status_code=500,
                 detail=f"Command execution failed: {result.stderr or 'Unknown error'}"
             )
+
+        # Update job info with execution results
+        job_info.status = "finished"
+        job_info.execution_time = result.execution_time
 
         # Create results archive
         zip_name = f"{command.lower()}_results_{job_id}"
@@ -137,6 +143,8 @@ async def execute_command(
         # Add CORS headers explicitly
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["X-Execution-Time"] = str(result.execution_time)
+        response.headers["X-Job-Status"] = job_info.status
         
         return response
 

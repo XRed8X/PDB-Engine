@@ -8,6 +8,7 @@ class CommandExecutionResponse(BaseModel):
     message: str
     command: str
     download_url: Optional[str] = None
+    execution_time: Optional[float] = None
 
 class PDBEngineExecutionResult(BaseModel):
     """Result of PDB Engine execution."""
@@ -15,6 +16,7 @@ class PDBEngineExecutionResult(BaseModel):
     stdout: str
     stderr: str
     return_code: int
+    execution_time: float = 0.0
 
 class JobInfo(BaseModel):
     """Generic information about a submitted job."""
@@ -27,3 +29,4 @@ class JobInfo(BaseModel):
     status: str
     download_url: Optional[str] = None
     message: Optional[str] = None
+    execution_time: Optional[float] = None

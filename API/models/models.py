@@ -25,6 +25,7 @@ class PDBEngineExecutionResult(BaseModel):
     stdout: str
     stderr: str
     return_code: int
+    execution_time: float = 0.0
 
 class JobInfo(BaseModel):
     """Information about a submitted job."""
