@@ -10,6 +10,8 @@ interface DownloadItem {
   timestamp: string;
   downloadUrl: string;
   filename: string;
+  executionTime: number;
+  status: 'pending' | 'finished' | 'error';
 }
 
 export const useCommandForm = () => {
@@ -50,6 +52,21 @@ export const useCommandForm = () => {
   };
 
   const handleSubmit = async () => {
+    const startTime = Date.now();
+    const downloadId = startTime.toString();
+    
+    // Add pending download to history immediately
+    const pendingDownload: DownloadItem = {
+      id: downloadId,
+      command: selectedCommand,
+      timestamp: new Date().toISOString(),
+      downloadUrl: '',
+      filename: 'Processing...',
+      executionTime: 0,
+      status: 'pending',
+    };
+    setDownloads((prev) => [pendingDownload, ...prev]);
+    
     try {
       setIsLoading(true);
       setError(null);
@@ -62,11 +79,16 @@ export const useCommandForm = () => {
       console.log('Command JSON:', commandJSON);
       
       // Execute command and get blob
-      const blob = await pdbEngineService.executeCommand(selectedCommand, formData);
+      const response = await pdbEngineService.executeCommand(selectedCommand, formData);
+      const blob = response.blob;
       
       // Create download URL from blob
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
+      
+      // Get execution time from headers (in seconds)
+      const executionTime = parseFloat(response.executionTime || '0');
+      const executionTimeMs = Date.now() - startTime;
       
       // Trigger automatic download
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -79,23 +101,43 @@ export const useCommandForm = () => {
       link.click();
       document.body.removeChild(link);
       
-      // Add to downloads history
-      const newDownload: DownloadItem = {
-        id: Date.now().toString(),
-        command: selectedCommand,
-        timestamp: new Date().toISOString(),
-        downloadUrl: url,
-        filename: filename,
-      };
-      setDownloads((prev) => [newDownload, ...prev]);
+      // Update the pending download with success status
+      setDownloads((prev) => 
+        prev.map((item) => 
+          item.id === downloadId
+            ? {
+                ...item,
+                downloadUrl: url,
+                filename: filename,
+                executionTime: executionTime,
+                status: 'finished' as const,
+              }
+            : item
+        )
+      );
       
       setSuccess(true);
       console.log('Command executed successfully, file downloaded:', filename);
       
     } catch (err: any) {
+      const executionTimeMs = Date.now() - startTime;
       const errorMessage = err.response?.data?.message || err.message || 'Error executing command';
       setError(errorMessage);
       console.error('Error executing command:', err);
+      
+      // Update the pending download with error status
+      setDownloads((prev) => 
+        prev.map((item) => 
+          item.id === downloadId
+            ? {
+                ...item,
+                filename: 'Failed',
+                executionTime: executionTimeMs / 1000,
+                status: 'error' as const,
+              }
+            : item
+        )
+      );
     } finally {
       setIsLoading(false);
     }

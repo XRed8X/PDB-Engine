@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from typing import List
 from core import settings, SecurityError
-from models.models import PDBEngineExecutionResult
+from models.models2 import PDBEngineExecutionResult
 
 
 class PDBEngineExecutor:
@@ -17,6 +17,7 @@ class PDBEngineExecutor:
     def execute(command: List[str], working_directory: Path) -> PDBEngineExecutionResult:
         """Execute PDB Engine command with security measures."""
         print(f"Executing: {' '.join(command)}")
+        print(f"Execution started...")
 
         start_time = time.time()
         try:
@@ -30,6 +31,7 @@ class PDBEngineExecutor:
             )
 
             execution_time = time.time() - start_time
+            print(f"Execution completed in {execution_time:.2f} seconds")
 
             return PDBEngineExecutionResult(
                 success=process.returncode == 0,
@@ -41,6 +43,7 @@ class PDBEngineExecutor:
 
         except subprocess.TimeoutExpired:
             execution_time = time.time() - start_time
+            print(f"Execution terminated due to timeout after {execution_time:.2f} seconds")
             return PDBEngineExecutionResult(
                 success=False,
                 stdout="",
@@ -50,11 +53,13 @@ class PDBEngineExecutor:
             )
 
         except SecurityError as e:
+            execution_time = time.time() - start_time
             print(f"Security error: {e}")
+            print(f"Execution terminated due to security error after {execution_time:.2f} seconds")
             return PDBEngineExecutionResult(
                 success=False,
                 stdout="",
                 stderr=f"Security violation: {str(e)}",
                 return_code=-2,
-                execution_time=0
+                execution_time=execution_time
             )
