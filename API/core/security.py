@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import List
 
-from core.valid_commands import CommandValidator as Commands
+from core.valid_commands import CommandValidator
 
 
 class CommandSecurityValidator:
@@ -35,7 +35,7 @@ class CommandSecurityValidator:
         Validates that command follows the expected structure.
         
         Args:
-            command_args: Command arguments to validate (without binary path)
+            command_args: Command arguments to validate (first element should be --command=CommandName)
             
         Returns:
             bool: True if command structure is valid
@@ -46,17 +46,22 @@ class CommandSecurityValidator:
         if not command_args:
             raise SecurityError("Empty command arguments")
         
-        # First argument should be a valid command
+        # First argument should be --command=CommandName
         first_arg = command_args[0]
-        if not Commands.is_valid_command(first_arg):
-            raise SecurityError(f"Invalid command: {first_arg}")
+        if not first_arg.startswith("--command="):
+            raise SecurityError("First argument must be --command=CommandName")
+        
+        # Extract and validate command name
+        command_name = first_arg.replace("--command=", "")
+        if not CommandValidator.is_valid_command(command_name):
+            raise SecurityError(f"Invalid command: {command_name}")
         
         # Validate each argument for dangerous patterns
         for arg in command_args:
             cls._validate_argument_safety(arg)
         
         # Validate argument structure
-        cls._validate_argument_structure(command_args[1:])  # Skip command itself
+        cls._validate_argument_structure(command_args[1:])
         
         return True
     
@@ -70,25 +75,22 @@ class CommandSecurityValidator:
     @classmethod
     def _validate_argument_structure(cls, args: List[str]) -> None:
         """Validate that arguments follow expected PDB Engine structure."""
-        i = 0
-        while i < len(args):
-            arg = args[i]
-            
-            # Check if it's a PDB argument
-            if arg.startswith(Arguments.PDB):
-                # Extract path and validate
-                pdb_path = arg[len(Arguments.PDB):]
-                cls._validate_pdb_path(pdb_path)
-                i += 1
-                continue
-            
-            # Check if it's a valid flag
-            if Flags.is_valid_flag(arg):
-                i += 1
-                continue
-            
-            # If we get here, it's an unrecognized argument
-            raise SecurityError(f"Unrecognized argument: {arg}")
+        for arg in args:
+            if '=' in arg:
+                key, value = arg.split('=', 1)
+                key = key.replace('--', '')
+
+                if not CommandValidator.is_valid_argument(key):
+                    raise SecurityError(f"Unknown argument: {key}")
+
+                if key == 'pdb' and value:
+                    cls._validate_pdb_path(value)
+            elif arg.startswith('--'):
+                flag = arg.replace('--', '')
+                if not CommandValidator.is_valid_flag(flag):
+                    raise SecurityError(f"Unknown flag: {flag}")
+            else:
+                raise SecurityError(f"Unrecognized argument format: {arg}")
     
     @classmethod
     def _validate_pdb_path(cls, pdb_path: str) -> None:

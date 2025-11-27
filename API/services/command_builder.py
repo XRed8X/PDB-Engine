@@ -9,6 +9,7 @@ from services.engine_executor import PDBEngineExecutor
 from services.pdb_cleaner_service import PDBCleanerService
 from core.valid_commands import build_command_from_dict
 from errors.engine_exceptions import PDBEngineExecutionError as EngineExecutionError
+from core.security import SecurityError, CommandSecurityValidator
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,15 @@ class GenericCommandService:
                 arguments=job_info.arguments,
                 flags=job_info.flags
             )
-            
+
+            # Validate command security
+            try:
+                CommandSecurityValidator.validate_command_structure(command_args)
+                logger.info(f"Command structure validated successfully")
+            except SecurityError as sec_err:
+                logger.error(f"Security validation failed: {sec_err}")
+                raise EngineExecutionError(f"Security validation failed: {str(sec_err)}")
+
             logger.info(f"Executing: {' '.join(command_args)}")
             
             # Execute command
@@ -60,7 +69,10 @@ class GenericCommandService:
                 logger.error(f"Command '{job_info.command}' failed for job {job_info.job_id}: {result.stderr}")
             
             return result
-            
+        
+        except SecurityError as e:
+            logger.error(f"Security error executing command '{job_info.command}': {e}", exc_info=True)
+            raise EngineExecutionError(f"Security validation failed: {str(e)}")
         except Exception as e:
             logger.error(f"Error executing command '{job_info.command}': {e}", exc_info=True)
             raise EngineExecutionError(f"Failed to execute command '{job_info.command}': {str(e)}")

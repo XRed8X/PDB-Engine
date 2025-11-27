@@ -2,12 +2,12 @@
 Generic command executor router - handles any PDB Engine command dynamically.
 """
 import logging
-from pathlib import Path
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse
-from typing import Optional
 import json
-
+from pathlib import Path
+from typing import Optional
+from fastapi.responses import FileResponse
+from core.security import SecurityError, CommandSecurityValidator
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
 from models.models import CommandExecutionResponse, JobInfo
 from services.command_builder import GenericCommandService
 from utils.workspace_manager import WorkspaceManager
@@ -71,7 +71,14 @@ async def execute_command(
         # Handle file upload if present
         input_filename = None
         if file:
-            if not file.filename.lower().endswith(".pdb"):
+            try:
+                safe_filename = CommandSecurityValidator.validate_filename(file.filename)
+                logger.info(f"Sanitized filename: {file.filename} -> {safe_filename}")
+            except SecurityError as sec_err:
+                logger.error(f"Invalid filename: {sec_err}")
+                raise HTTPException(status_code=400, detail=f"Invalid filename: {str(sec_err)}")
+            
+            if not safe_filename.lower().endswith(".pdb"):
                 raise HTTPException(status_code=400, detail="Only PDB files are allowed")
             
             content = await file.read()
@@ -81,7 +88,7 @@ async def execute_command(
                     detail=f"File too large (max {settings.max_file_size_mb:.1f} MB)"
                 )
             
-            input_filename = file.filename
+            input_filename = safe_filename
             input_file = Path(job_path) / input_filename
             
             with open(input_file, "wb") as f:
