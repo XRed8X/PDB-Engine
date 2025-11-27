@@ -159,13 +159,3 @@ async def execute_command(
         if zip_path and Path(zip_path).exists():
             background_tasks.add_task(WorkspaceManager.cleanup_path, str(zip_path))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-
-@router.get("/commands")
-async def get_available_commands():
-    """Get list of available commands"""
-    return {
-        "commands": list(CommandValidator.VALID_COMMANDS),
-        "arguments": list(CommandValidator.VALID_ARGUMENTS),
-        "flags": list(CommandValidator.VALID_FLAGS)
-    }

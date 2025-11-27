@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from router import execute_command
 from core.settings import settings
 from router.protein_design import router as protein_router
+from services.docker_executor import DockerExecutor
 
 app = FastAPI(
     title=settings.API_TITLE,
@@ -34,6 +35,26 @@ async def root():
         "version": settings.API_VERSION,
         "description": settings.API_DESCRIPTION
     }
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint with Docker status."""
+    health_status = {
+        "status": "healthy",
+        "version": settings.API_VERSION,
+        "execution_mode": "docker" if settings.USE_DOCKER else "local"
+    }
+    
+    if settings.USE_DOCKER:
+        
+        docker_available = DockerExecutor.check_docker_available()
+        health_status["docker_available"] = docker_available
+        health_status["docker_image"] = settings.DOCKER_IMAGE
+        
+        if not docker_available:
+            health_status["status"] = "unhealthy"
+    
+    return health_status
 
 
 if __name__ == "__main__":
