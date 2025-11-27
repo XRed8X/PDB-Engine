@@ -31,8 +31,13 @@ class Settings(BaseSettings):
         description="Allowed CORS origins for the UI"
     )
 
+    # ====== Docker Configuration ======
+    USE_DOCKER: bool = Field(default=False, description="Use Docker container for UniDesign execution")
+    DOCKER_IMAGE: str = Field(default="unidesign:latest", description="Docker image name")
+    DOCKER_CONTAINER_WORKDIR: str = Field(default="/workspace", description="Working directory inside container")
+    
     # ====== PDB Engine Configuration ======
-    PDBENGINE_BINARY_PATH: Path = Field(..., description="Path to the PDB Engine binary")
+    PDBENGINE_BINARY_PATH: Path = Field(default=Path("UniDesign.exe"), description="Path to the PDB Engine binary (ignored if USE_DOCKER=True)")
     PDBENGINE_TIMEOUT: int = Field(default=600, description="Timeout for PDB Engine execution (seconds)")
 
     # ====== Directory Configuration ======
@@ -67,7 +72,11 @@ class Settings(BaseSettings):
 
     # ====== Validators ======
     @field_validator("PDBENGINE_BINARY_PATH")
-    def validate_binary_path(cls, v: Path):
+    def validate_binary_path(cls, v: Path, info):
+        # Skip validation if using Docker
+        if info.data.get("USE_DOCKER", False):
+            return v
+        
         if isinstance(v, str):
             v = Path(v)
         if not v.exists() or not v.is_file():

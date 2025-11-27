@@ -88,8 +88,12 @@ def build_command_from_dict(
     Returns:
         List of command arguments ready for execution
     """
-    # Start with the PDB Engine executable
-    cmd_args = [str(settings.PDBENGINE_BINARY_PATH), get_command_base(command)]
+    # Start with base command
+    # When using Docker, we don't include the binary path (it's the entrypoint)
+    if settings.USE_DOCKER:
+        cmd_args = [get_command_base(command)]
+    else:
+        cmd_args = [str(settings.PDBENGINE_BINARY_PATH), get_command_base(command)]
     
     # Add arguments dynamically
     if arguments:
