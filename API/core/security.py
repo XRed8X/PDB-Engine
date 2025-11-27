@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import List
 
-from core.commands import Commands, Arguments, Flags
+from core.valid_commands import CommandValidator as Commands
 
 
 class CommandSecurityValidator:
