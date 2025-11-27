@@ -1,57 +1,66 @@
 """
-Service responsible for securely building PDB Engine command-line invocations.
+Generic command service - executes any PDB Engine command dynamically.
 """
-
+import logging
 from pathlib import Path
-from typing import List, Union, Dict
-from core import settings, Commands, Flags, build_command, CommandSecurityValidator, SecurityError
-from models.models import ProteinDesignRequest
 
+from models.models import PDBEngineExecutionResult, JobInfo
+from services.engine_executor import PDBEngineExecutor
+from services.pdb_cleaner_service import PDBCleanerService
+from core.valid_commands import build_command_from_dict
+from errors.engine_exceptions import PDBEngineExecutionError as EngineExecutionError
 
-class PDBCommandBuilder:
-    """Builds secure commands for executing PDB Engine."""
+logger = logging.getLogger(__name__)
 
+class GenericCommandService:
+    """Service for executing any PDB Engine command"""
+    
     @staticmethod
-    def build_secure_command(input_pdb_path: Path, options: Union[ProteinDesignRequest, Dict]) -> List[str]:
-        """Build secure command for executing PDB Engine."""
-
-        # Validate command
-        if not Commands.is_valid_command(Commands.PROTEIN_DESIGN):
-            raise SecurityError(f"Invalid command: {Commands.PROTEIN_DESIGN}")
+    def execute_command(job_info: JobInfo) -> PDBEngineExecutionResult:
+        """
+        Execute any PDB Engine command dynamically.
         
-        # Handle both dict and ProteinDesignRequest types
-        if isinstance(options, dict):
-            ppint = options.get('ppint', False)
-            interface_only = options.get('interface_only', False)
-        else:
-            # ProteinDesignRequest object
-            ppint = options.ppint
-            interface_only = options.interface_only
-
-        # Build flag list
-        flags = []
-        if ppint:
-            flags.append(Flags.PPINT)
-        if interface_only:
-            flags.append(Flags.INTERFACE_ONLY)
-
-        # Validate all flags
-        for flag in flags:
-            if not Flags.is_valid_flag(flag):
-                raise SecurityError(f"Invalid flag: {flag}")
-
-        # Build command
-        command_args = build_command(
-            Commands.PROTEIN_DESIGN_COMMAND,
-            str(input_pdb_path.absolute()),
-            flags
-        )
-
-        # Security validation
-        CommandSecurityValidator.validate_command_structure(command_args)
-
-        # Full command
-        full_command = [str(settings.PDBENGINE_BINARY_PATH)] + command_args
-
-        print(f"Built secure command: {' '.join(full_command)}")
-        return full_command
+        Args:
+            job_info: Job information containing command, arguments, and flags
+            
+        Returns:
+            PDBEngineExecutionResult with execution details
+        """
+        try:
+            job_path = Path(job_info.job_path)
+            
+            logger.info(f"Executing command '{job_info.command}' for job {job_info.job_id}")
+            logger.info(f"Working directory: {job_path}")
+            
+            # Clean PDB file if present
+            if job_info.input_filename and 'pdb' in job_info.arguments:
+                input_file = Path(job_info.arguments['pdb'])
+                if input_file.exists():
+                    logger.info(f"Cleaning PDB file: {input_file}")
+                    cleaner = PDBCleanerService()
+                    cleaned_file = cleaner.validate_and_clean(str(input_file))
+                    job_info.arguments['pdb'] = cleaned_file
+                    logger.info(f"PDB cleaned: {cleaned_file}")
+            
+            # Build command dynamically
+            command_args = build_command_from_dict(
+                command=job_info.command,
+                arguments=job_info.arguments,
+                flags=job_info.flags
+            )
+            
+            logger.info(f"Executing: {' '.join(command_args)}")
+            
+            # Execute command
+            result = PDBEngineExecutor.execute(command_args, job_path)
+            
+            if result.success:
+                logger.info(f"Command '{job_info.command}' executed successfully for job {job_info.job_id}")
+            else:
+                logger.error(f"Command '{job_info.command}' failed for job {job_info.job_id}: {result.stderr}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error executing command '{job_info.command}': {e}", exc_info=True)
+            raise EngineExecutionError(f"Failed to execute command '{job_info.command}': {str(e)}")

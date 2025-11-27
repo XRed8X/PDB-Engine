@@ -1,11 +1,11 @@
 """
 Main FastAPI application for PDB Engine API.
 """
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from router import execute_command
 from core.settings import settings
-from router.protein_design import router as protein_router
 from services.docker_executor import DockerExecutor
 
 app = FastAPI(
@@ -58,5 +58,4 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host=settings.HOST, port=settings.PORT)

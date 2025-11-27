@@ -8,12 +8,12 @@ from fastapi.responses import FileResponse
 from typing import Optional
 import json
 
-from models.models2 import CommandExecutionResponse, JobInfo
-from services.command_builder2 import GenericCommandService
+from models.models import CommandExecutionResponse, JobInfo
+from services.command_builder import GenericCommandService
 from utils.workspace_manager import WorkspaceManager
 from utils.archive_manager import ArchiveManager
 from core.settings import settings
-from core.commands2 import CommandValidator
+from core.valid_commands import CommandValidator
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["commands"])

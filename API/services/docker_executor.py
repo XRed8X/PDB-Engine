@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from typing import List
 from core.settings import settings
-from models.models2 import PDBEngineExecutionResult
+from models.models import PDBEngineExecutionResult
 
 logger = logging.getLogger(__name__)
 

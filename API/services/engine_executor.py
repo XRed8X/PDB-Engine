@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List
 from core.settings import settings
 from core.security import SecurityError
-from models.models2 import PDBEngineExecutionResult
+from models.models import PDBEngineExecutionResult
 
 logger = logging.getLogger(__name__)
 
